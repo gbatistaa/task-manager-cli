@@ -1,6 +1,5 @@
 import chalk from "chalk";
-import { appendFile, existsSync, mkdir } from "fs";
-import { promisify } from "util";
+import { appendFileSync, existsSync, mkdirSync } from "fs";
 
 type status = "done" | "doing" | "to do";
 
@@ -18,10 +17,8 @@ interface User {
 //   input: process.stdin,
 //   output: process.stdout,
 // });
-const args = process.argv.slice(2);
 
-const mkdirAsync = promisify(mkdir);
-const appendFileAsync = promisify(appendFile);
+const args = process.argv.slice(2);
 
 const init = async (): Promise<void> => {
   const currDir = process.cwd();
@@ -35,11 +32,11 @@ const init = async (): Promise<void> => {
 
   try {
     if (!existsSync(configDir)) {
-      await mkdirAsync(configDir);
+      mkdirSync(configDir);
     }
     if (!existsSync(tasksFilePath)) {
       const stringJson = JSON.stringify(userDefault, null, 2);
-      await appendFileAsync(tasksFilePath, stringJson);
+      appendFileSync(tasksFilePath, stringJson);
       console.log(chalk.green("Developer's task manager initialized successfully!"));
     } else {
       console.log(chalk.yellow("Developer's task manager was already initialized!"));
