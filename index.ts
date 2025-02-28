@@ -31,10 +31,8 @@ const init = async (): Promise<void> => {
   const tasksFilePath = `${configDir}/tasks.json`;
 
   try {
-    if (!existsSync(configDir)) {
-      mkdirSync(configDir);
-    }
     if (!existsSync(tasksFilePath)) {
+      mkdirSync(configDir);
       const stringJson = JSON.stringify(userDefault, null, 2);
       appendFileSync(tasksFilePath, stringJson);
       console.log(chalk.green("Developer's task manager initialized successfully!"));
