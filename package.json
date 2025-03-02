@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A simples task manager CLI for developers",
   "main": "index.js",
+  "bin": {
+    "devtodo": "index.js"
+  },
   "scripts": {
     "test": "test"
   },
