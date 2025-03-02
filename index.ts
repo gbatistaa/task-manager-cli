@@ -87,6 +87,7 @@ const add = (): void => {
     );
     tasksList.push(newTask);
     writeFileSync(tasksFilePath, JSON.stringify(tasksFile, null, 2));
+    console.log(chalk.green(`Task added successfully! (ID:${newTask.id})`));
   } else {
     console.log(chalk.red("The task must have a description"));
   }
