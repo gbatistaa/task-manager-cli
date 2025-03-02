@@ -23,11 +23,6 @@ interface User {
   tasks: Task[];
 }
 
-// const read = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-// });
-
 const args = process.argv.slice(2);
 const currDir = process.cwd();
 const configDir = `${currDir}/config`;
@@ -51,10 +46,12 @@ const init = (): void => {
 
 const listAll = (tasks: Task[]): void => {
   for (let i = 0; i < tasks.length; i++) {
+    const createdAt = new Date(tasks[i].createdAt);
     const updatedAt = new Date(tasks[i].updatedAt);
     console.log(chalk.cyan(`----------Task ${tasks[i].id}----------`));
     console.log(`Name: ${chalk.green(tasks[i].description)}`);
     console.log(`Status: ${tasks[i].status}`);
+    console.log(`Created at: ${createdAt.toLocaleString()}`);
     console.log(`Last update: ${updatedAt.toLocaleString()}\n`);
   }
 };
@@ -64,10 +61,12 @@ const listFiltered = (tasks: Task[], status: status): void => {
     return task.status === status;
   });
   for (let i = 0; i < tasksFiltered.length; i++) {
+    const createdAt = new Date(tasksFiltered[i].createdAt);
     const updatedAt = new Date(tasksFiltered[i].updatedAt);
     console.log(chalk.cyan(`----------Task ${tasksFiltered[i].id}----------`));
     console.log(`Name: ${chalk.green(tasksFiltered[i].description)}`);
     console.log(`Status: ${tasksFiltered[i].status}`);
+    console.log(`Created at: ${createdAt.toLocaleString()}`);
     console.log(`Last update: ${updatedAt.toLocaleString()}\n`);
   }
 };
@@ -94,14 +93,46 @@ const add = (): void => {
 };
 
 const update = (taskId: number, newDescription: string): void => {
+  const newUpdateDate = new Date();
   const tasksFile = JSON.parse(readFileSync(tasksFilePath, "utf8"));
   const tasksList: Task[] = tasksFile.tasks;
   tasksList[taskId - 1].description = newDescription;
+  tasksList[taskId - 1].updatedAt = newUpdateDate.toString();
+  writeFileSync(tasksFilePath, JSON.stringify(tasksFile, null, 2));
+};
+
+const mark = (taskId: number, newStatus: status): void => {
+  const newUpdateDate = new Date();
+  const tasksFile = JSON.parse(readFileSync(tasksFilePath, "utf8"));
+  const targetTask: Task = tasksFile.tasks[taskId - 1];
+  targetTask.status = newStatus;
+  targetTask.updatedAt = newUpdateDate.toString();
+  writeFileSync(tasksFilePath, JSON.stringify(tasksFile, null, 2));
+};
+
+const deleteTask = (taskId: number) => {
+  const tasksFile = JSON.parse(readFileSync(tasksFilePath, "utf8"));
+  const tasksList: Task[] = tasksFile.tasks;
+  // console.log(tasksList);
+  tasksList.splice(taskId - 1, 1);
+  tasksList.forEach((task: Task, index: number) => {
+    task.id = index + 1;
+  });
   writeFileSync(tasksFilePath, JSON.stringify(tasksFile, null, 2));
 };
 
 function main() {
   const mainCmd = args[0];
+
+  if (mainCmd === "init") {
+    init();
+    return;
+  }
+  if (!existsSync(tasksFilePath)) {
+    console.log(chalk.red('Developer\'s task manager must be initialized first!\nrun "devtask init"'));
+    return;
+  }
+
   const tasksFile = JSON.parse(readFileSync(tasksFilePath, "utf8"));
   const tasksList: Task[] = tasksFile.tasks;
 
@@ -116,7 +147,7 @@ function main() {
 
     case "list":
       switch (args[1]) {
-        case "":
+        case undefined:
           listAll(tasksList);
           break;
 
@@ -137,6 +168,43 @@ function main() {
           break;
       }
       break;
+
+    case "update":
+      if (!args[1] || !args[2]) {
+        console.log(chalk.red("Missing arguments"));
+      } else {
+        update(parseInt(args[1]), args[2]);
+        console.log(chalk.green(`Task number updated ${parseInt(args[1])} sucessfully!`));
+      }
+      break;
+    case "mark-done":
+      if (!args[1]) {
+        console.log(chalk.red("Missing arguments"));
+      } else {
+        mark(parseInt(args[1]), "Done ✅");
+      }
+      break;
+    case "mark-in-prog":
+      if (!args[1]) {
+        console.log(chalk.red("Missing arguments"));
+      } else {
+        mark(parseInt(args[1]), "In-progress ⌛");
+      }
+      break;
+    case "mark-todo":
+      if (!args[1]) {
+        console.log(chalk.red("Missing arguments"));
+      } else {
+        mark(parseInt(args[1]), "Todo 🚨");
+      }
+      break;
+    case "delete":
+      if (!args[1]) {
+        console.log(chalk.red("Missing the task id to be deleted"));
+      } else {
+        deleteTask(parseInt(args[1]));
+        console.log(chalk.greenBright(`Task number ${args[1]} deleted sucessfully!`));
+      }
   }
 }
 
