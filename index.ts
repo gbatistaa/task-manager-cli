@@ -1,16 +1,15 @@
 import chalk from "chalk";
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 
-type status = "done" | "doing" | "to do";
-
+type status = "Done" | "In-progress" | "Todo";
 class Task {
   public id: number;
   public description: string;
   public status: status;
-  public createdAt: Date;
-  public updatedAt: Date;
+  public createdAt: string;
+  public updatedAt: string;
 
-  constructor(id: number, description: string, status: status, createdAt: Date, updatedAt: Date) {
+  constructor(id: number, description: string, status: status, createdAt: string, updatedAt: string) {
     this.id = id;
     this.description = description;
     this.status = status;
@@ -50,18 +49,42 @@ const init = (): void => {
   }
 };
 
+const listAll = (tasks: Task[]): void => {
+  for (let i = 0; i < tasks.length; i++) {
+    const updatedAt = new Date(tasks[i].updatedAt);
+    console.log(`----------Task ${tasks[i].id}----------`);
+    console.log(`Name: ${tasks[i].description}`);
+    console.log(`Status: ${tasks[i].status}`);
+    console.log(`Last update: ${updatedAt.toLocaleString()}\n`);
+  }
+};
+
 const add = (): void => {
   if (!existsSync(tasksFilePath)) {
     console.log(chalk.red('Developer\'s task manager must be initialized to add tasks!\nrun "devtask init"'));
   } else if (args[1]) {
-    const tasksObj: Task[] = JSON.parse(readFileSync(tasksFilePath, "utf8")).tasks;
+    const tasksFile = JSON.parse(readFileSync(tasksFilePath, "utf8"));
+    const tasksList: Task[] = tasksFile.tasks;
+    const taskCreationDate = new Date();
+    const newTask = new Task(
+      tasksList.length + 1,
+      args[1],
+      "Done",
+      taskCreationDate.toString(),
+      taskCreationDate.toString(),
+    );
+    tasksList.push(newTask);
+    writeFileSync(tasksFilePath, JSON.stringify(tasksFile, null, 2));
+    console.log(args[1]);
   } else {
-    // console.log(chalk.red())
+    console.log(chalk.red("The task must have a description"));
   }
 };
 
 function main() {
   const mainCmd = args[0];
+  const tasksFile = JSON.parse(readFileSync(tasksFilePath, "utf8"));
+  const tasksList: Task[] = tasksFile.tasks;
 
   switch (mainCmd) {
     case "init":
@@ -70,6 +93,10 @@ function main() {
 
     case "add":
       add();
+      break;
+
+    case "list":
+      listAll(tasksList);
       break;
   }
 }
