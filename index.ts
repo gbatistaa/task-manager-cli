@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 
-type status = "Done" | "In-progress" | "Todo";
+type status = "Done ✅" | "In-progress ⌛" | "Todo 🚨";
 class Task {
   public id: number;
   public description: string;
@@ -52,9 +52,22 @@ const init = (): void => {
 const listAll = (tasks: Task[]): void => {
   for (let i = 0; i < tasks.length; i++) {
     const updatedAt = new Date(tasks[i].updatedAt);
-    console.log(`----------Task ${tasks[i].id}----------`);
-    console.log(`Name: ${tasks[i].description}`);
+    console.log(chalk.cyan(`----------Task ${tasks[i].id}----------`));
+    console.log(`Name: ${chalk.green(tasks[i].description)}`);
     console.log(`Status: ${tasks[i].status}`);
+    console.log(`Last update: ${updatedAt.toLocaleString()}\n`);
+  }
+};
+
+const listFiltered = (tasks: Task[], status: status): void => {
+  const tasksFiltered = tasks.filter((task: Task) => {
+    return task.status === status;
+  });
+  for (let i = 0; i < tasksFiltered.length; i++) {
+    const updatedAt = new Date(tasksFiltered[i].updatedAt);
+    console.log(chalk.cyan(`----------Task ${tasksFiltered[i].id}----------`));
+    console.log(`Name: ${chalk.green(tasksFiltered[i].description)}`);
+    console.log(`Status: ${tasksFiltered[i].status}`);
     console.log(`Last update: ${updatedAt.toLocaleString()}\n`);
   }
 };
@@ -69,16 +82,22 @@ const add = (): void => {
     const newTask = new Task(
       tasksList.length + 1,
       args[1],
-      "Done",
+      "Todo 🚨",
       taskCreationDate.toString(),
       taskCreationDate.toString(),
     );
     tasksList.push(newTask);
     writeFileSync(tasksFilePath, JSON.stringify(tasksFile, null, 2));
-    console.log(args[1]);
   } else {
     console.log(chalk.red("The task must have a description"));
   }
+};
+
+const update = (taskId: number, newDescription: string): void => {
+  const tasksFile = JSON.parse(readFileSync(tasksFilePath, "utf8"));
+  const tasksList: Task[] = tasksFile.tasks;
+  tasksList[taskId - 1].description = newDescription;
+  writeFileSync(tasksFilePath, JSON.stringify(tasksFile, null, 2));
 };
 
 function main() {
@@ -96,7 +115,27 @@ function main() {
       break;
 
     case "list":
-      listAll(tasksList);
+      switch (args[1]) {
+        case "":
+          listAll(tasksList);
+          break;
+
+        case "done":
+          listFiltered(tasksList, "Done ✅");
+          break;
+
+        case "in-progress":
+          listFiltered(tasksList, "In-progress ⌛");
+          break;
+
+        case "todo":
+          listFiltered(tasksList, "Todo 🚨");
+          break;
+
+        default:
+          console.log(chalk.red("Invalid status filter"));
+          break;
+      }
       break;
   }
 }
